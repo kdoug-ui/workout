@@ -1,0 +1,10 @@
+{
+  "name": "Workout Logger",
+  "short_name": "Workout Logger",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3ede3",
+  "theme_color": "#ba6236",
+  "description": "Mobile-friendly workout logging app with local history.",
+  "icons": []
+}
