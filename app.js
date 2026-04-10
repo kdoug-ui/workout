@@ -330,6 +330,51 @@ document.getElementById("loadDemo").addEventListener("click", () => {
   flash("Demo data loaded.");
 });
 
+document.getElementById("exportCsv").addEventListener("click", () => {
+  const headers = [
+    "Date",
+    "Exercise",
+    "Muscle Group",
+    "Set 1 Weight",
+    "Set 1 Reps",
+    "Set 2 Weight",
+    "Set 2 Reps",
+    "Set 3 Weight",
+    "Set 3 Reps",
+    "Notes",
+    "Created At"
+  ];
+
+  const rows = entries
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map((entry) => [
+      entry.date,
+      entry.exercise,
+      entry.group,
+      entry.sets[0]?.weight ?? "",
+      entry.sets[0]?.reps ?? "",
+      entry.sets[1]?.weight ?? "",
+      entry.sets[1]?.reps ?? "",
+      entry.sets[2]?.weight ?? "",
+      entry.sets[2]?.reps ?? "",
+      entry.notes || "",
+      entry.createdAt || ""
+    ]);
+
+  const csv = [headers, ...rows]
+    .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "workout-history-export.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  flash("Excel-friendly CSV exported.");
+});
+
 document.getElementById("exportData").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
   const link = document.createElement("a");

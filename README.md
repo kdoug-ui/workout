@@ -9,6 +9,7 @@ This is a small mobile-first web app for workout logging.
 - session view for today
 - history view
 - latest progress per exercise
+- CSV export for Excel
 - local storage in the browser
 
 ## Files
