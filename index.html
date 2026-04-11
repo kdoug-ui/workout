@@ -282,6 +282,7 @@
 
         <div class="mini-actions">
           <button class="secondary" id="showAddExercise">Add Exercise</button>
+          <button class="secondary" id="showDeleteExercise">Delete Exercise</button>
         </div>
 
         <div class="grid-2">
@@ -350,6 +351,22 @@
           <div class="actions">
             <button class="primary" id="saveExerciseType">Save Exercise</button>
             <button class="secondary" id="cancelAddExercise">Cancel</button>
+          </div>
+        </div>
+
+        <div id="deleteExerciseCard" class="card" style="display:none; margin-top: 12px; padding: 14px; background: #fffdf9;">
+          <div class="title-row" style="margin-bottom: 10px;">
+            <h3>Delete Exercise</h3>
+            <span>custom exercises only</span>
+          </div>
+          <label>
+            Choose Exercise
+            <select id="deleteExerciseSelect"></select>
+          </label>
+          <div class="muted" id="deleteExerciseHelp" style="margin-top: 8px;"></div>
+          <div class="actions">
+            <button class="danger" id="confirmDeleteExercise">Delete Exercise</button>
+            <button class="secondary" id="cancelDeleteExercise">Cancel</button>
           </div>
         </div>
 

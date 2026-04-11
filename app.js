@@ -60,11 +60,14 @@ const sessionList = document.getElementById("sessionList");
 const progressList = document.getElementById("progressList");
 const historyList = document.getElementById("historyList");
 const addExerciseCard = document.getElementById("addExerciseCard");
+const deleteExerciseCard = document.getElementById("deleteExerciseCard");
 const newExerciseName = document.getElementById("newExerciseName");
 const newExerciseGroup = document.getElementById("newExerciseGroup");
 const newDefault1 = document.getElementById("newDefault1");
 const newDefault2 = document.getElementById("newDefault2");
 const newDefault3 = document.getElementById("newDefault3");
+const deleteExerciseSelect = document.getElementById("deleteExerciseSelect");
+const deleteExerciseHelp = document.getElementById("deleteExerciseHelp");
 
 workoutDate.value = todayString();
 document.getElementById("todayLabel").textContent = readableDate(todayString());
@@ -119,6 +122,14 @@ function saveCustomExercises() {
     return !defaultExerciseOptions.some((base) => base.name === exercise.name);
   });
   localStorage.setItem(customExerciseStorageKey, JSON.stringify(customExercises));
+}
+
+function isDefaultExercise(name) {
+  return defaultExerciseOptions.some((exercise) => exercise.name === name);
+}
+
+function customExercises() {
+  return exerciseOptions.filter((exercise) => !isDefaultExercise(exercise.name));
 }
 
 function flash(message, isError = false) {
@@ -317,6 +328,7 @@ function renderAll() {
   renderSession();
   renderProgress();
   renderHistory();
+  buildDeleteExercisePicker();
   syncExercise();
 }
 
@@ -331,9 +343,55 @@ function resetAddExerciseForm() {
 function toggleAddExercise(show) {
   addExerciseCard.style.display = show ? "block" : "none";
   if (show) {
+    deleteExerciseCard.style.display = "none";
+  }
+  if (show) {
     newExerciseName.focus();
   } else {
     resetAddExerciseForm();
+  }
+}
+
+function buildDeleteExercisePicker() {
+  const custom = customExercises();
+  deleteExerciseSelect.innerHTML = "";
+
+  if (!custom.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No custom exercises yet";
+    deleteExerciseSelect.appendChild(option);
+    deleteExerciseHelp.textContent = "Only exercises you added yourself can be deleted.";
+    return;
+  }
+
+  custom.forEach((exercise) => {
+    const option = document.createElement("option");
+    option.value = exercise.name;
+    option.textContent = exercise.name;
+    deleteExerciseSelect.appendChild(option);
+  });
+
+  updateDeleteExerciseHelp();
+}
+
+function updateDeleteExerciseHelp() {
+  const name = deleteExerciseSelect.value;
+  if (!name) {
+    deleteExerciseHelp.textContent = "Only exercises you added yourself can be deleted.";
+    return;
+  }
+  const historyCount = entries.filter((entry) => entry.exercise === name).length;
+  deleteExerciseHelp.textContent = historyCount
+    ? `${historyCount} saved workout entr${historyCount === 1 ? "y" : "ies"} use this exercise. Deleting it removes it from the picker, not from history.`
+    : "This exercise has no saved history yet.";
+}
+
+function toggleDeleteExercise(show) {
+  deleteExerciseCard.style.display = show ? "block" : "none";
+  if (show) {
+    addExerciseCard.style.display = "none";
+    buildDeleteExercisePicker();
   }
 }
 
@@ -376,6 +434,14 @@ document.getElementById("cancelAddExercise").addEventListener("click", () => {
   toggleAddExercise(false);
 });
 
+document.getElementById("showDeleteExercise").addEventListener("click", () => {
+  toggleDeleteExercise(true);
+});
+
+document.getElementById("cancelDeleteExercise").addEventListener("click", () => {
+  toggleDeleteExercise(false);
+});
+
 document.getElementById("saveExerciseType").addEventListener("click", () => {
   const name = newExerciseName.value.trim();
   const group = newExerciseGroup.value.trim();
@@ -408,6 +474,32 @@ document.getElementById("saveExerciseType").addEventListener("click", () => {
   toggleAddExercise(false);
   syncExercise();
   flash(`${name} added.`);
+});
+
+deleteExerciseSelect.addEventListener("change", updateDeleteExerciseHelp);
+
+document.getElementById("confirmDeleteExercise").addEventListener("click", () => {
+  const name = deleteExerciseSelect.value;
+  if (!name) {
+    flash("No custom exercise selected.", true);
+    return;
+  }
+
+  const confirmDelete = window.confirm(`Delete ${name} from the exercise list?`);
+  if (!confirmDelete) return;
+
+  exerciseOptions = exerciseOptions.filter((exercise) => exercise.name !== name);
+  saveCustomExercises();
+  buildExercisePicker();
+
+  if (selectedExercise === name) {
+    selectedExercise = exerciseOptions[0].name;
+    exerciseSelect.value = selectedExercise;
+  }
+
+  toggleDeleteExercise(false);
+  renderAll();
+  flash(`${name} deleted from the exercise list.`);
 });
 
 document.getElementById("loadDemo").addEventListener("click", () => {
