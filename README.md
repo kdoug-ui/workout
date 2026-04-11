@@ -5,6 +5,7 @@ This is a small mobile-first web app for workout logging.
 ## What it does
 
 - quick exercise entry on phone
+- add your own exercises with the `Add Exercise` button
 - one saved entry per exercise
 - session view for today
 - history view
