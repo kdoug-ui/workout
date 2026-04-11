@@ -276,6 +276,38 @@
 
       <section class="card">
         <div class="title-row">
+          <h2>Cloud Sync</h2>
+          <span id="syncModeLabel">local only</span>
+        </div>
+        <div class="grid-2">
+          <label>
+            Supabase URL
+            <input id="supabaseUrl" type="text" placeholder="https://your-project.supabase.co">
+          </label>
+          <label>
+            Supabase Anon Key
+            <input id="supabaseAnonKey" type="text" placeholder="Paste your anon key">
+          </label>
+        </div>
+        <div class="grid-2" style="margin-top: 10px;">
+          <label>
+            Email Sign-In
+            <input id="emailInput" type="email" placeholder="you@example.com">
+          </label>
+          <div style="display: flex; align-items: end;">
+            <button class="secondary" id="saveCloudConfig" style="width: 100%;">Save Cloud Setup</button>
+          </div>
+        </div>
+        <div class="mini-actions" style="margin-top: 12px;">
+          <button class="secondary" id="sendMagicLink">Email Sign-In Link</button>
+          <button class="secondary" id="syncNow">Sync Now</button>
+          <button class="secondary" id="useLocalOnly">Use Local Only</button>
+        </div>
+        <div class="muted" id="syncStatus">Cloud sync not configured yet.</div>
+      </section>
+
+      <section class="card">
+        <div class="title-row">
           <h2>Quick Entry</h2>
           <span>one exercise at a time</span>
         </div>
@@ -422,6 +454,6 @@
     </div>
   </main>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
