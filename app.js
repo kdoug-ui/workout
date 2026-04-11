@@ -89,6 +89,10 @@ function readableDate(value) {
   });
 }
 
+function filenameDate(value) {
+  return (value || todayString()).replaceAll("-", "-");
+}
+
 function loadEntries() {
   try {
     return JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -414,6 +418,11 @@ document.getElementById("loadDemo").addEventListener("click", () => {
 });
 
 document.getElementById("exportCsv").addEventListener("click", () => {
+  if (!entries.length) {
+    flash("No workout history to export yet.", true);
+    return;
+  }
+
   const headers = [
     "Date",
     "Exercise",
@@ -449,10 +458,17 @@ document.getElementById("exportCsv").addEventListener("click", () => {
     .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
     .join("\n");
 
+  const orderedDates = entries
+    .map((entry) => entry.date)
+    .filter(Boolean)
+    .sort();
+  const startDate = orderedDates[0] || todayString();
+  const endDate = orderedDates[orderedDates.length - 1] || todayString();
+
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "workout-history-export.csv";
+  link.download = `workout-history-${filenameDate(startDate)}-to-${filenameDate(endDate)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
   flash("Excel-friendly CSV exported.");
