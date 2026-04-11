@@ -1,4 +1,4 @@
-const exerciseOptions = [
+const defaultExerciseOptions = [
   { name: "Chest Press", group: "Chest", defaults: [70, 80, 90] },
   { name: "Pec", group: "Chest", defaults: [70, 85, 100] },
   { name: "Triceps Push Down", group: "Triceps", defaults: [27, 36, 41] },
@@ -12,6 +12,7 @@ const exerciseOptions = [
   { name: "Abdominal", group: "Core", defaults: [85, 85, 85] }
 ];
 
+const customExerciseStorageKey = "iphone-workout-exercises";
 const sampleEntries = [
   {
     id: makeId(),
@@ -43,6 +44,7 @@ const sampleEntries = [
 ];
 
 const storageKey = "iphone-workout-history";
+let exerciseOptions = loadExercises();
 let entries = loadEntries();
 let selectedExercise = exerciseOptions[0].name;
 
@@ -57,6 +59,12 @@ const notice = document.getElementById("notice");
 const sessionList = document.getElementById("sessionList");
 const progressList = document.getElementById("progressList");
 const historyList = document.getElementById("historyList");
+const addExerciseCard = document.getElementById("addExerciseCard");
+const newExerciseName = document.getElementById("newExerciseName");
+const newExerciseGroup = document.getElementById("newExerciseGroup");
+const newDefault1 = document.getElementById("newDefault1");
+const newDefault2 = document.getElementById("newDefault2");
+const newDefault3 = document.getElementById("newDefault3");
 
 workoutDate.value = todayString();
 document.getElementById("todayLabel").textContent = readableDate(todayString());
@@ -89,8 +97,24 @@ function loadEntries() {
   }
 }
 
+function loadExercises() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(customExerciseStorageKey)) || [];
+    return [...defaultExerciseOptions, ...saved];
+  } catch {
+    return [...defaultExerciseOptions];
+  }
+}
+
 function saveEntries() {
   localStorage.setItem(storageKey, JSON.stringify(entries));
+}
+
+function saveCustomExercises() {
+  const customExercises = exerciseOptions.filter((exercise) => {
+    return !defaultExerciseOptions.some((base) => base.name === exercise.name);
+  });
+  localStorage.setItem(customExerciseStorageKey, JSON.stringify(customExercises));
 }
 
 function flash(message, isError = false) {
@@ -292,6 +316,23 @@ function renderAll() {
   syncExercise();
 }
 
+function resetAddExerciseForm() {
+  newExerciseName.value = "";
+  newExerciseGroup.value = "";
+  newDefault1.value = "";
+  newDefault2.value = "";
+  newDefault3.value = "";
+}
+
+function toggleAddExercise(show) {
+  addExerciseCard.style.display = show ? "block" : "none";
+  if (show) {
+    newExerciseName.focus();
+  } else {
+    resetAddExerciseForm();
+  }
+}
+
 document.getElementById("saveEntry").addEventListener("click", () => {
   const exercise = getExercise(exerciseSelect.value);
   const sets = collectSets();
@@ -321,6 +362,48 @@ document.getElementById("saveEntry").addEventListener("click", () => {
 document.getElementById("clearForm").addEventListener("click", () => {
   resetForm();
   flash("Form cleared.");
+});
+
+document.getElementById("showAddExercise").addEventListener("click", () => {
+  toggleAddExercise(true);
+});
+
+document.getElementById("cancelAddExercise").addEventListener("click", () => {
+  toggleAddExercise(false);
+});
+
+document.getElementById("saveExerciseType").addEventListener("click", () => {
+  const name = newExerciseName.value.trim();
+  const group = newExerciseGroup.value.trim();
+  if (!name || !group) {
+    flash("Enter an exercise name and muscle group.", true);
+    return;
+  }
+
+  const exists = exerciseOptions.some((exercise) => exercise.name.toLowerCase() === name.toLowerCase());
+  if (exists) {
+    flash("That exercise already exists.", true);
+    return;
+  }
+
+  const newExercise = {
+    name,
+    group,
+    defaults: [
+      Number(newDefault1.value) || 0,
+      Number(newDefault2.value) || 0,
+      Number(newDefault3.value) || 0
+    ]
+  };
+
+  exerciseOptions = [...exerciseOptions, newExercise].sort((a, b) => a.name.localeCompare(b.name));
+  saveCustomExercises();
+  buildExercisePicker();
+  exerciseSelect.value = newExercise.name;
+  selectedExercise = newExercise.name;
+  toggleAddExercise(false);
+  syncExercise();
+  flash(`${name} added.`);
 });
 
 document.getElementById("loadDemo").addEventListener("click", () => {

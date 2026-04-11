@@ -280,6 +280,10 @@
           <span>one exercise at a time</span>
         </div>
 
+        <div class="mini-actions">
+          <button class="secondary" id="showAddExercise">Add Exercise</button>
+        </div>
+
         <div class="grid-2">
           <label>
             Date
@@ -310,6 +314,44 @@
           Notes
           <textarea id="notes" placeholder="Optional: hard set, machine used, soreness, form reminder"></textarea>
         </label>
+
+        <div id="addExerciseCard" class="card" style="display:none; margin-top: 12px; padding: 14px; background: #fffdf9;">
+          <div class="title-row" style="margin-bottom: 10px;">
+            <h3>Add Exercise</h3>
+            <span>saved on this device</span>
+          </div>
+          <div class="grid-2">
+            <label>
+              Exercise Name
+              <input id="newExerciseName" type="text" placeholder="Example: Incline Press">
+            </label>
+            <label>
+              Muscle Group
+              <input id="newExerciseGroup" type="text" placeholder="Example: Chest">
+            </label>
+          </div>
+          <div class="grid-2" style="margin-top: 10px;">
+            <label>
+              Default Set 1
+              <input id="newDefault1" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+            </label>
+            <label>
+              Default Set 2
+              <input id="newDefault2" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+            </label>
+          </div>
+          <div class="grid-2" style="margin-top: 10px;">
+            <label>
+              Default Set 3
+              <input id="newDefault3" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+            </label>
+            <div></div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="saveExerciseType">Save Exercise</button>
+            <button class="secondary" id="cancelAddExercise">Cancel</button>
+          </div>
+        </div>
 
         <div class="actions">
           <button class="primary" id="saveEntry">Save Exercise</button>
