@@ -61,6 +61,8 @@ const progressList = document.getElementById("progressList");
 const historyList = document.getElementById("historyList");
 const addExerciseCard = document.getElementById("addExerciseCard");
 const deleteExerciseCard = document.getElementById("deleteExerciseCard");
+const lastWorkoutDate = document.getElementById("lastWorkoutDate");
+const lastWorkoutSets = document.getElementById("lastWorkoutSets");
 const newExerciseName = document.getElementById("newExerciseName");
 const newExerciseGroup = document.getElementById("newExerciseGroup");
 const newDefault1 = document.getElementById("newDefault1");
@@ -203,11 +205,26 @@ function syncExercise() {
     ? `${recent.date} • ${recent.sets.map((set) => set.weight || "-").join("/")}`
     : "No history yet";
 
+  if (recent) {
+    lastWorkoutDate.textContent = readableDate(recent.date);
+    lastWorkoutSets.textContent = recent.sets
+      .map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`)
+      .join(" • ");
+  } else {
+    lastWorkoutDate.textContent = "No history yet";
+    lastWorkoutSets.textContent = "Choose an exercise to see the previous sets.";
+  }
+
   document.querySelectorAll('[data-kind="weight"]').forEach((input, index) => {
-    if (!input.dataset.touched) input.value = exercise.defaults[index] ?? "";
+    if (!input.dataset.touched) {
+      input.value = recent ? (recent.sets[index]?.weight ?? "") : (exercise.defaults[index] ?? "");
+    }
   });
   document.querySelectorAll('[data-kind="reps"]').forEach((input) => {
-    if (!input.value) input.value = 10;
+    const index = Number(input.dataset.index);
+    if (!input.dataset.touched) {
+      input.value = recent ? (recent.sets[index]?.reps ?? "") : 10;
+    }
   });
 }
 
@@ -225,6 +242,7 @@ function resetForm() {
     input.dataset.touched = "";
   });
   document.querySelectorAll('[data-kind="reps"]').forEach((input) => {
+    input.dataset.touched = "";
     input.value = "";
   });
   notes.value = "";
@@ -589,6 +607,9 @@ exerciseSelect.addEventListener("change", syncExercise);
 
 document.addEventListener("input", (event) => {
   if (event.target.matches('[data-kind="weight"]')) {
+    event.target.dataset.touched = "true";
+  }
+  if (event.target.matches('[data-kind="reps"]')) {
     event.target.dataset.touched = "true";
   }
 });
