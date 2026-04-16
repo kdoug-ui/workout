@@ -590,6 +590,9 @@ async function initializeSupabase() {
   });
 
   updateSyncUi();
+  if (currentUser) {
+    await syncFromCloud();
+  }
 }
 
 async function sendMagicLink() {
