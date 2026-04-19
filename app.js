@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ï»¿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const defaultExerciseOptions = [
   { name: "Chest Press", group: "Chest", defaults: [70, 80, 90] },
@@ -12,6 +12,20 @@ const defaultExerciseOptions = [
   { name: "Leg Curl", group: "Legs", defaults: [65, 75, 85] },
   { name: "Leg Extension", group: "Legs", defaults: [65, 75, 85] },
   { name: "Abdominal", group: "Core", defaults: [85, 85, 85] }
+];
+
+const quickEntryOrder = [
+  "Chest Press",
+  "Leg Press",
+  "Pec",
+  "Leg Curl",
+  "Triceps Push Down",
+  "Leg Extension",
+  "Shoulder Press",
+  "Biceps",
+  "Abdominal",
+  "Lat Pull Down",
+  "Seated Row"
 ];
 
 const storageKeys = {
@@ -179,7 +193,14 @@ function buildExercisePicker() {
   exerciseSelect.innerHTML = "";
   exerciseGrid.innerHTML = "";
 
-  exerciseOptions.forEach((exercise) => {
+  const orderedExercises = [
+    ...quickEntryOrder
+      .map((name) => exerciseOptions.find((exercise) => exercise.name === name))
+      .filter(Boolean),
+    ...exerciseOptions.filter((exercise) => !quickEntryOrder.includes(exercise.name))
+  ];
+
+  orderedExercises.forEach((exercise) => {
     const option = document.createElement("option");
     option.value = exercise.name;
     option.textContent = exercise.name;
@@ -240,14 +261,14 @@ function syncExercise() {
 
   const recent = latestEntryFor(selectedExercise);
   lastTime.value = recent
-    ? `${recent.date} • ${recent.sets.map((set) => set.weight || "-").join("/")}`
+    ? `${recent.date} â€¢ ${recent.sets.map((set) => set.weight || "-").join("/")}`
     : "No history yet";
 
   if (recent) {
     lastWorkoutDate.textContent = readableDate(recent.date);
     lastWorkoutSets.textContent = recent.sets
       .map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`)
-      .join(" • ");
+      .join(" â€¢ ");
   } else {
     lastWorkoutDate.textContent = "No history yet";
     lastWorkoutSets.textContent = "Choose an exercise to see the previous sets.";
@@ -279,13 +300,13 @@ function collectSets() {
 function resetForm() {
   document.querySelectorAll('[data-kind="weight"]').forEach((input) => {
     input.dataset.touched = "";
+    input.value = "";
   });
   document.querySelectorAll('[data-kind="reps"]').forEach((input) => {
     input.dataset.touched = "";
     input.value = "";
   });
   notes.value = "";
-  syncExercise();
 }
 
 function sumVolume(list) {
@@ -321,7 +342,7 @@ function renderSession() {
         <strong>${entry.exercise}</strong>
         <span class="muted">${entry.group}</span>
       </div>
-      <div>${entry.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
+      <div>${entry.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" â€¢ ")}</div>
       <div class="muted" style="margin-top: 6px;">${entry.notes || "No notes"}</div>
     `;
     sessionList.appendChild(item);
@@ -341,7 +362,7 @@ function renderProgress() {
           <span class="muted">${latest.date}</span>
         </div>
         <div class="muted">${exercise.group}</div>
-        <div style="margin-top: 6px;">${latest.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
+        <div style="margin-top: 6px;">${latest.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" â€¢ ")}</div>
       `
       : `
         <div class="item-head">
@@ -371,7 +392,7 @@ function renderHistory() {
         <span class="muted">${readableDate(entry.date)}</span>
       </div>
       <div class="muted">${entry.group}</div>
-      <div style="margin-top: 6px;">${entry.sets.map((set, index) => `S${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
+      <div style="margin-top: 6px;">${entry.sets.map((set, index) => `S${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" â€¢ ")}</div>
       <div class="muted" style="margin-top: 6px;">${entry.notes || "No notes"}</div>
     `;
     historyList.appendChild(item);
