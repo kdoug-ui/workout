@@ -391,10 +391,16 @@
 
       <section class="card">
         <div class="title-row">
-          <h2>Progress</h2>
-          <span>latest by exercise</span>
+          <h2>History</h2>
+          <span>saved in the app</span>
         </div>
-        <div id="progressList" class="list"></div>
+        <div class="mini-actions">
+          <button class="secondary" id="loadDemo">Load Demo Data</button>
+          <button class="secondary" id="exportCsv">Export CSV</button>
+          <button class="secondary" id="exportData">Export Backup</button>
+          <button class="danger" id="clearHistory">Clear All</button>
+        </div>
+        <div id="historyList" class="list"></div>
       </section>
 
       <section class="card">
@@ -431,16 +437,10 @@
 
       <section class="card">
         <div class="title-row">
-          <h2>History</h2>
-          <span>saved in the app</span>
+          <h2>Progress</h2>
+          <span>latest by exercise</span>
         </div>
-        <div class="mini-actions">
-          <button class="secondary" id="loadDemo">Load Demo Data</button>
-          <button class="secondary" id="exportCsv">Export CSV</button>
-          <button class="secondary" id="exportData">Export Backup</button>
-          <button class="danger" id="clearHistory">Clear All</button>
-        </div>
-        <div id="historyList" class="list"></div>
+        <div id="progressList" class="list"></div>
       </section>
     </div>
 
