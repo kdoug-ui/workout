@@ -99,7 +99,20 @@ function makeId() {
 }
 
 function todayString() {
-  return new Date().toISOString().slice(0, 10);
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function readableDate(value) {
@@ -168,6 +181,10 @@ function flash(message, isError = false) {
   }, 2600);
 }
 
+function cloudNotSignedInMessage() {
+  return "Cloud is configured, but this computer is not signed in. Click Email Sign-In Link and open the email link on this computer.";
+}
+
 function updateSyncUi(message = "") {
   supabaseUrlInput.value = cloudConfig.url || "";
   supabaseAnonKeyInput.value = cloudConfig.anonKey || "";
@@ -181,7 +198,7 @@ function updateSyncUi(message = "") {
 
   if (!currentUser) {
     syncModeLabel.textContent = "cloud ready";
-    syncStatus.textContent = message || "Cloud configured. Email yourself a sign-in link to sync across devices.";
+    syncStatus.textContent = message || cloudNotSignedInMessage();
     return;
   }
 
@@ -210,7 +227,7 @@ function buildExercisePicker() {
     button.type = "button";
     button.className = "exercise-card";
     button.dataset.exercise = exercise.name;
-    button.innerHTML = `<strong>${exercise.name}</strong><span>${exercise.group}</span>`;
+    button.innerHTML = `<strong>${escapeHtml(exercise.name)}</strong><span>${escapeHtml(exercise.group)}</span>`;
     button.addEventListener("click", () => {
       selectedExercise = exercise.name;
       exerciseSelect.value = exercise.name;
@@ -241,7 +258,11 @@ function getExercise(name) {
 function latestEntryFor(exerciseName) {
   return [...entries]
     .filter((entry) => entry.exercise === exerciseName)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    .sort((a, b) => {
+      const dateDifference = new Date(b.date) - new Date(a.date);
+      if (dateDifference) return dateDifference;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    })[0];
 }
 
 function syncExercise() {
@@ -339,11 +360,11 @@ function renderSession() {
     item.className = "item";
     item.innerHTML = `
       <div class="item-head">
-        <strong>${entry.exercise}</strong>
-        <span class="muted">${entry.group}</span>
+        <strong>${escapeHtml(entry.exercise)}</strong>
+        <span class="muted">${escapeHtml(entry.group)}</span>
       </div>
       <div>${entry.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
-      <div class="muted" style="margin-top: 6px;">${entry.notes || "No notes"}</div>
+      <div class="muted" style="margin-top: 6px;">${escapeHtml(entry.notes || "No notes")}</div>
     `;
     sessionList.appendChild(item);
   });
@@ -358,18 +379,18 @@ function renderProgress() {
     item.innerHTML = latest
       ? `
         <div class="item-head">
-          <strong>${exercise.name}</strong>
-          <span class="muted">${latest.date}</span>
+          <strong>${escapeHtml(exercise.name)}</strong>
+          <span class="muted">${escapeHtml(latest.date)}</span>
         </div>
-        <div class="muted">${exercise.group}</div>
+        <div class="muted">${escapeHtml(exercise.group)}</div>
         <div style="margin-top: 6px;">${latest.sets.map((set, index) => `Set ${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
       `
       : `
         <div class="item-head">
-          <strong>${exercise.name}</strong>
+          <strong>${escapeHtml(exercise.name)}</strong>
           <span class="muted">No history</span>
         </div>
-        <div class="muted">${exercise.group}</div>
+        <div class="muted">${escapeHtml(exercise.group)}</div>
       `;
     progressList.appendChild(item);
   });
@@ -388,12 +409,12 @@ function renderHistory() {
     item.className = "item";
     item.innerHTML = `
       <div class="item-head">
-        <strong>${entry.exercise}</strong>
+        <strong>${escapeHtml(entry.exercise)}</strong>
         <span class="muted">${readableDate(entry.date)}</span>
       </div>
-      <div class="muted">${entry.group}</div>
+      <div class="muted">${escapeHtml(entry.group)}</div>
       <div style="margin-top: 6px;">${entry.sets.map((set, index) => `S${index + 1}: ${set.weight || "-"} x ${set.reps || "-"}`).join(" • ")}</div>
-      <div class="muted" style="margin-top: 6px;">${entry.notes || "No notes"}</div>
+      <div class="muted" style="margin-top: 6px;">${escapeHtml(entry.notes || "No notes")}</div>
     `;
     historyList.appendChild(item);
   });
@@ -517,9 +538,75 @@ function exportCsv() {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `workout-history-${startDate}-to-${endDate}.csv`;
+  link.style.display = "none";
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+    link.remove();
+  }, 0);
   flash("Excel-friendly CSV exported.");
+}
+
+function entriesToTabText() {
+  const headers = [
+    "Date",
+    "Exercise",
+    "Muscle Group",
+    "Set 1 Weight",
+    "Set 1 Reps",
+    "Set 2 Weight",
+    "Set 2 Reps",
+    "Set 3 Weight",
+    "Set 3 Reps",
+    "Notes",
+    "Created At"
+  ];
+
+  const rows = entries
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map((entry) => [
+      entry.date,
+      entry.exercise,
+      entry.group,
+      entry.sets[0]?.weight ?? "",
+      entry.sets[0]?.reps ?? "",
+      entry.sets[1]?.weight ?? "",
+      entry.sets[1]?.reps ?? "",
+      entry.sets[2]?.weight ?? "",
+      entry.sets[2]?.reps ?? "",
+      entry.notes || "",
+      entry.createdAt || ""
+    ]);
+
+  return [headers, ...rows]
+    .map((row) => row.map((value) => String(value).replaceAll("\t", " ").replaceAll("\n", " ")).join("\t"))
+    .join("\n");
+}
+
+async function copyForExcel() {
+  if (!entries.length) {
+    flash("No workout history to copy yet. Sync first, then copy.", true);
+    return;
+  }
+
+  const text = entriesToTabText();
+  try {
+    await navigator.clipboard.writeText(text);
+    flash("Workout history copied. Paste it into Excel.");
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    flash(copied ? "Workout history copied. Paste it into Excel." : "Copy failed. Try Export CSV instead.", !copied);
+  }
 }
 
 function entryToRow(entry) {
@@ -594,10 +681,18 @@ async function initializeSupabase() {
     return;
   }
 
-  supabase = createClient(cloudConfig.url, cloudConfig.anonKey);
+  try {
+    supabase = createClient(cloudConfig.url, cloudConfig.anonKey);
+  } catch (error) {
+    supabase = null;
+    currentUser = null;
+    updateSyncUi(`Cloud setup is invalid: ${error.message}`);
+    return;
+  }
+
   const { data, error } = await supabase.auth.getSession();
   if (error) {
-    updateSyncUi("Cloud configured, but session lookup failed.");
+    updateSyncUi(`Cloud configured, but session lookup failed: ${error.message}`);
     return;
   }
 
@@ -648,8 +743,8 @@ async function sendMagicLink() {
 
 async function syncFromCloud() {
   if (!supabase || !currentUser) {
-    updateSyncUi();
-    return;
+    updateSyncUi(!supabase ? "Save your Supabase URL and anon key first." : cloudNotSignedInMessage());
+    return false;
   }
 
   updateSyncUi("Syncing from cloud...");
@@ -662,7 +757,7 @@ async function syncFromCloud() {
   if (entriesError || exercisesError) {
     flash(entriesError?.message || exercisesError?.message || "Cloud sync failed.", true);
     updateSyncUi("Cloud sync failed. Check your tables and sign-in.");
-    return;
+    return false;
   }
 
   entries = remoteEntries.map(rowToEntry);
@@ -670,6 +765,7 @@ async function syncFromCloud() {
   saveEntries();
   renderAll();
   updateSyncUi(`Synced ${entries.length} workout entries from cloud.`);
+  return true;
 }
 
 async function saveEntryToCloud(entry) {
@@ -828,6 +924,7 @@ document.getElementById("loadDemo").addEventListener("click", () => {
 });
 
 document.getElementById("exportCsv").addEventListener("click", exportCsv);
+document.getElementById("copyExcel").addEventListener("click", copyForExcel);
 
 document.getElementById("exportData").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
@@ -864,8 +961,12 @@ document.getElementById("sendMagicLink").addEventListener("click", async () => {
 });
 
 document.getElementById("syncNow").addEventListener("click", async () => {
-  await syncFromCloud();
-  flash("Sync complete.");
+  const synced = await syncFromCloud();
+  if (synced) {
+    flash("Sync complete.");
+  } else {
+    flash("Sync did not run. Check your cloud settings and sign-in.", true);
+  }
 });
 
 document.getElementById("useLocalOnly").addEventListener("click", () => {

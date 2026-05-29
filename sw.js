@@ -1,4 +1,4 @@
-const CACHE_NAME = "workout-logger-v2";
+const CACHE_NAME = "workout-logger-v3";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -27,6 +27,13 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  const requestUrl = new URL(event.request.url);
+  const isAppFile = requestUrl.origin === self.location.origin && event.request.method === "GET";
+
+  if (!isAppFile) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
